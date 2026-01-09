@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import SplashScreen from './components/SplashScreen';
 import LanguageGate from './components/LanguageGate';
@@ -17,6 +18,7 @@ import SupportPage from './components/SupportPage';
 import UserSupportPage from './components/UserSupportPage';
 import PrivacyPage from './components/PrivacyPage';
 import TermsPage from './components/TermsPage';
+import AboutNexusPage from './components/AboutNexusPage';
 import { AppState, UserProfile, WorkRecord, Language, Currency } from './types';
 import { supabase, isConfigured } from './lib/supabase';
 import { translations } from './translations';
@@ -56,7 +58,6 @@ const App: React.FC = () => {
   const isInitialLoad = useRef(true);
   const notificationChecked = useRef(false);
 
-  // Monitoramento de Páginas para Google Analytics (SPA Mode)
   useEffect(() => {
     if (typeof window.gtag === 'function' && appState !== 'splash') {
       const pageTitleMap: Record<string, string> = {
@@ -74,10 +75,10 @@ const App: React.FC = () => {
         'support': 'Atendimento Staff',
         'user-support': 'Suporte ao Cliente',
         'privacy': 'Privacidade',
-        'terms': 'Termos de Uso'
+        'terms': 'Termos de Uso',
+        'about-nexus': 'Sobre a Digital Nexus'
       };
 
-      // Dispara o evento page_view explicitamente para o GA4
       window.gtag('event', 'page_view', {
         page_title: pageTitleMap[appState] || appState,
         page_location: window.location.href,
@@ -112,8 +113,6 @@ const App: React.FC = () => {
       }
 
       if (result === null || result === undefined) return key;
-      if (typeof result === 'object' && !Array.isArray(result)) return key;
-      
       return result;
     } catch (e) {
       return key;
@@ -140,27 +139,6 @@ const App: React.FC = () => {
     notificationChecked.current = false;
   };
 
-  const checkSubscriptionAlert = async (profile: UserProfile) => {
-    if (notificationChecked.current || !profile.id || profile.role !== 'user') return;
-    try {
-      const sub = typeof profile.subscription === 'string' ? JSON.parse(profile.subscription) : profile.subscription;
-      if (!sub?.startDate) return;
-      const expiry = addYears(parseISO(sub.startDate), 1);
-      const daysLeft = differenceInDays(expiry, new Date());
-      if (daysLeft <= 30 && daysLeft > 0) {
-        const { count } = await supabase.from('chat_messages').select('*', { count: 'exact', head: true }).eq('user_id', profile.id).ilike('text', '%assinatura expira em%');
-        if (count === 0) {
-          await supabase.from('chat_messages').insert({
-            user_id: profile.id,
-            sender_role: 'support',
-            text: `⚠️ NOTIFICAÇÃO DIGITAL NEXUS: A sua assinatura expira em ${daysLeft} dias. Por favor, contacte o suporte para renovação.`
-          });
-        }
-      }
-      notificationChecked.current = true;
-    } catch (e) { console.error("Nexus Sub Check Error:", e); }
-  };
-
   const loadUserData = useCallback(async (userId: string, retryCount = 0) => {
     try {
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
@@ -182,11 +160,11 @@ const App: React.FC = () => {
         }
         setUser(profile);
         setAuthError(null);
-        checkSubscriptionAlert(profile);
         if (isMaster) setAppState('admin');
-        else if (profile.role === 'vendor') { setSelectedVendorData({ id: profile.id, name: profile.name, code: profile.vendor_code }); setAppState('vendor-detail'); }
+        else if (profile.role === 'vendor') setAppState('vendor-detail');
         else if (profile.role === 'support') setAppState('support');
         else setAppState('dashboard');
+        
         const { data: dbRecords } = await supabase.from('work_records').select('*').eq('user_id', userId);
         if (dbRecords) {
           const formatted: Record<string, WorkRecord> = {};
@@ -194,7 +172,7 @@ const App: React.FC = () => {
           setRecords(formatted);
         }
       } else setAppState('landing');
-    } catch (e) { console.error("Nexus Init Error:", e); setAppState('landing'); }
+    } catch (e) { setAppState('landing'); }
     finally { setTimeout(() => setAuthInitialized(true), 100); }
   }, []);
 
@@ -211,7 +189,7 @@ const App: React.FC = () => {
     if (isInitialLoad.current) { initAuth(); isInitialLoad.current = false; }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event: any, session: any) => {
       if (event === 'SIGNED_IN' && session) { setAuthInitialized(false); loadUserData(session.user.id); }
-      else if (event === 'SIGNED_OUT') { setAppState('landing'); setUser(DEFAULT_USER); setSelectedVendorData(null); setAuthInitialized(true); }
+      else if (event === 'SIGNED_OUT') { setAppState('landing'); setUser(DEFAULT_USER); setAuthInitialized(true); }
     });
     return () => subscription.unsubscribe();
   }, [loadUserData]);
@@ -246,11 +224,13 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen text-slate-100 bg-[#020617] selection:bg-purple-500/30">
       {(appState === 'splash') ? <SplashScreen t={t} /> : null}
-      {appState === 'landing' && <LandingPage onLogin={() => setAppState('login')} onSubscribe={() => setAppState('subscription')} t={t} lang={systemLang} setLang={setSystemLang} onPrivacy={() => setAppState('privacy')} onTerms={() => setAppState('terms')} />}
+      {appState === 'landing' && <LandingPage onLogin={() => setAppState('login')} onSubscribe={() => setAppState('subscription')} t={t} lang={systemLang} setLang={setSystemLang} onPrivacy={() => setAppState('privacy')} onTerms={() => setAppState('terms')} onAbout={() => setAppState('about-nexus')} />}
       {appState === 'privacy' && <PrivacyPage onBack={() => setAppState('landing')} />}
       {appState === 'terms' && <TermsPage onBack={() => setAppState('landing')} />}
       {appState === 'subscription' && <SubscriptionPage onSuccess={() => setAppState('login')} onBack={() => setAppState('landing')} t={t} />}
       {appState === 'login' && <LoginPage onLogin={() => {}} onBack={() => setAppState('landing')} t={t} externalError={authError} />}
+      {appState === 'about-nexus' && <AboutNexusPage onBack={() => setAppState(user.id ? 'dashboard' : 'landing')} />}
+      
       {['dashboard', 'finance', 'reports', 'accountant', 'settings', 'admin', 'vendor-detail', 'vendor-sales', 'support', 'user-support'].includes(appState) && (
         <div className="flex h-screen overflow-hidden relative">
           <Sidebar activeTab={appState} setActiveTab={setAppState} user={user} onLogout={handleLogout} t={t} />
@@ -261,9 +241,8 @@ const App: React.FC = () => {
               {appState === 'reports' && <ReportsPage user={user} records={records} t={t} f={formatCurrency} />}
               {appState === 'accountant' && <AccountantPage user={user} records={records} t={t} f={formatCurrency} />}
               {appState === 'settings' && <SettingsPage user={user} setUser={handleUpdateProfile} t={t} />}
-              {appState === 'admin' && <AdminPage currentUser={user} f={formatCurrency} onLogout={handleLogout} t={t} onUpdateProfile={handleUpdateProfile} onViewVendor={(id) => { setSelectedVendorData({id}); setAppState('vendor-detail'); }} onViewVendorSales={(vendor) => { setSelectedVendorData(vendor); setAppState('vendor-sales'); }} />}
-              {appState === 'vendor-detail' && <VendorDetailPage vendorId={selectedVendorData?.id || user.id || ""} currentUser={user} onBack={() => setAppState(user.role === 'vendor' ? 'vendor-detail' : 'admin')} f={formatCurrency} isVendorSelf={selectedVendorData?.id === user.id || user.role === 'vendor'} />}
-              {appState === 'vendor-sales' && <VendorSalesPage user={user} adminOverrideVendor={selectedVendorData} onBackToAdmin={() => setAppState(user.role === 'vendor' ? 'vendor-detail' : 'admin')} />}
+              {appState === 'admin' && <AdminPage currentUser={user} f={formatCurrency} onLogout={handleLogout} t={t} onUpdateProfile={handleUpdateProfile} />}
+              {appState === 'vendor-detail' && <VendorDetailPage vendorId={user.id!} currentUser={user} onBack={() => {}} f={formatCurrency} isVendorSelf={true} />}
               {appState === 'support' && <SupportPage user={user} f={formatCurrency} t={t} />}
               {appState === 'user-support' && <UserSupportPage user={user} t={t} />}
             </div>

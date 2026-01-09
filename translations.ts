@@ -35,6 +35,14 @@ export const translations: Record<string, any> = {
         "Informações centralizadas IRS, SS E IVA",
         "Relatórios de elite para o contabilista."
       ],
+      advantages: [
+        { title: "Download em PDF", desc: "Relatórios profissionais prontos para o seu contabilista." },
+        { title: "Controlo de Horas Exatas", desc: "Registo rigoroso de entradas, saídas e pausas em tempo real." },
+        { title: "Impostos Automáticos", desc: "Cálculo instantâneo de retenções IRS, Seg. Social e IVA." },
+        { title: "Sincronização Cloud", desc: "Dados seguros e acessíveis em qualquer dispositivo Nexus." },
+        { title: "Suporte Nexus Elite", desc: "Atendimento prioritário 24/7 pela nossa equipa técnica." },
+        { title: "Segurança Máxima", desc: "Encriptação de dados de nível bancário e conformidade RGPD." }
+      ],
       promo: {
         badge: "Oferta de Lançamento",
         title: "Vantagens",

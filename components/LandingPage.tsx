@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowRight, CheckCircle2, Sparkles, ShieldCheck, Zap, Clock, Wallet, Mail, ShieldAlert, Star, TrendingUp, FileText, Quote, Globe
+  ArrowRight, CheckCircle2, Sparkles, ShieldCheck, Zap, Clock, Wallet, Mail, ShieldAlert, Star, TrendingUp, FileText, Quote, Globe, Info
 } from 'lucide-react';
 import { Language } from '../types';
 
@@ -9,12 +10,13 @@ interface Props {
   onSubscribe: () => void;
   onPrivacy: () => void;
   onTerms: () => void;
+  onAbout: () => void;
   t: (key: string) => any;
   lang: Language;
   setLang: (l: Language) => void;
 }
 
-const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms, t, lang, setLang }) => {
+const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms, onAbout, t, lang, setLang }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -99,6 +101,7 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
             <span className="font-bold text-lg tracking-tighter text-white">Nexus<span className="text-emerald-400">Time</span></span>
           </div>
           <div className="flex items-center gap-4">
+            <button onClick={onAbout} className="hidden md:block text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-colors mr-4">Sobre a Empresa</button>
             <button onClick={onLogin} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-colors">{t('common.login')}</button>
             <button onClick={onSubscribe} className="px-5 py-2.5 bg-emerald-500 text-slate-950 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl transition-all active:scale-95 hover:bg-emerald-400">{t('common.activate')}</button>
           </div>
@@ -120,6 +123,13 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
             <p className="text-sm md:text-xl text-slate-400 mb-12 max-w-xl mx-auto font-medium leading-relaxed">
               {t('landing.subhero')}
             </p>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+               <button onClick={onSubscribe} className="w-full px-8 py-5 bg-emerald-500 text-slate-950 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-400 transition-all shadow-xl active:scale-95">Começar Agora</button>
+               <button onClick={onAbout} className="w-full px-8 py-5 bg-slate-900 border border-white/10 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-800 transition-all flex items-center justify-center gap-3">
+                 <Info className="w-4 h-4" /> Ecossistema Nexus
+               </button>
+            </div>
           </div>
         </section>
 
@@ -193,7 +203,7 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
               <span className="font-bold text-sm tracking-tighter opacity-50 uppercase">Digital Nexus Solutions</span>
             </div>
             <div className="flex gap-10 text-[10px] font-black text-slate-700 uppercase tracking-widest">
-              <a href="mailto:suporte@digitalnexus.com" className="hover:text-emerald-500 transition-colors">Suporte</a>
+              <button onClick={onAbout} className="hover:text-emerald-500 transition-colors">Sobre a Nexus</button>
               <button onClick={onPrivacy} className="hover:text-emerald-500 transition-colors">{t('landing.footer.privacy')}</button>
               <button onClick={onTerms} className="hover:text-emerald-500 transition-colors">{t('landing.footer.terms')}</button>
             </div>

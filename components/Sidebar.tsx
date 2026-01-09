@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, LogOut, FileText, LayoutDashboard, DollarSign, ShieldCheck, BriefcaseBusiness, Award, ShoppingCart, LifeBuoy } from 'lucide-react';
+import { Settings, LogOut, FileText, LayoutDashboard, DollarSign, ShieldCheck, BriefcaseBusiness, Award, ShoppingCart, LifeBuoy, Info } from 'lucide-react';
 import { UserProfile, AppState } from '../types';
 
 interface Props {
@@ -33,6 +33,7 @@ const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab, user, onLogout, t }
     { id: 'user-support' as AppState, icon: LifeBuoy, label: 'Suporte', show: !isAdmin && !isSupport && !isMaster && !isVendor },
     
     { id: 'admin' as AppState, icon: ShieldCheck, label: 'Nexus Master', show: isAdmin },
+    { id: 'about-nexus' as AppState, icon: Info, label: 'Digital Nexus', show: true },
     { id: 'settings' as AppState, icon: Settings, label: 'Perfil', show: !isMaster },
   ];
 
@@ -76,7 +77,7 @@ const Sidebar: React.FC<Props> = ({ activeTab, setActiveTab, user, onLogout, t }
                 <tab.icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`} />
               </div>
               <span className={`text-[7px] font-black uppercase tracking-widest text-center whitespace-nowrap transition-all duration-300 ${isActive ? 'opacity-100 scale-100' : 'opacity-40 scale-90'}`}>
-                {tab.id === 'dashboard' ? 'Log' : tab.id === 'accountant' ? 'Contas' : tab.id === 'admin' ? 'Master' : tab.id === 'reports' ? 'Relat.' : tab.id === 'user-support' || tab.id === 'support' ? 'Suporte' : tab.id === 'vendor-detail' ? 'Rede' : tab.id === 'vendor-sales' ? 'Vendas' : tab.label}
+                {tab.id === 'dashboard' ? 'Log' : tab.id === 'accountant' ? 'Contas' : tab.id === 'admin' ? 'Master' : tab.id === 'reports' ? 'Relat.' : tab.id === 'user-support' || tab.id === 'support' ? 'Suporte' : tab.id === 'vendor-detail' ? 'Rede' : tab.id === 'vendor-sales' ? 'Vendas' : tab.id === 'about-nexus' ? 'Empresa' : tab.label}
               </span>
               {isActive && (
                 <div className="absolute -top-1 w-6 h-0.5 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>

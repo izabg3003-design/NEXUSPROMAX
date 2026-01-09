@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ArrowLeft, Loader2, CreditCard, Tag, Sparkles, CheckCircle2, User, Mail, Phone, Lock, Zap, ShieldCheck, AlertTriangle, CalendarDays, KeySquare, Wallet, Info, Globe, Shield, Check, ShieldAlert, Star } from 'lucide-react';
+import { ArrowLeft, Loader2, CreditCard, Tag, Sparkles, CheckCircle2, User, Mail, Phone, Lock, Zap, ShieldCheck, AlertTriangle, CalendarDays, KeySquare, Wallet, Info, Globe, Shield, Check, ShieldAlert, Star, FileDown, Clock, Coins, Cloud, Headphones } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getStripe } from '../lib/stripe';
 
@@ -50,6 +50,13 @@ const SubscriptionPage: React.FC<Props> = ({ onSuccess, onBack, t }) => {
     const data = t('landing.advantages');
     return Array.isArray(data) ? data : [];
   }, [t]);
+
+  // Map icons to advantages based on index or title
+  const getAdvIcon = (index: number) => {
+    const icons = [FileDown, Clock, Coins, Cloud, Headphones, ShieldCheck];
+    const Icon = icons[index] || CheckCircle2;
+    return <Icon className="w-4 h-4 text-emerald-400" />;
+  };
 
   useEffect(() => {
     const code = vendorCode.trim().toUpperCase();
@@ -162,7 +169,6 @@ const SubscriptionPage: React.FC<Props> = ({ onSuccess, onBack, t }) => {
       });
 
       if (functionError) {
-        // Tentar extrair a mensagem real enviada pela Edge Function no corpo da resposta
         let realError = "";
         try {
           const body = await functionError.context.json();
@@ -309,32 +315,31 @@ const SubscriptionPage: React.FC<Props> = ({ onSuccess, onBack, t }) => {
                 <span className="text-[10px] font-black uppercase tracking-[0.3em]">Voltar</span>
               </button>
 
-              <div className="flex items-center gap-4 mb-12">
+              <div className="flex items-center gap-4 mb-8">
                 <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center font-black text-white text-xl shadow-2xl">DX</div>
                 <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase leading-none">NEXUS<span className="text-emerald-400">TIME</span></h2>
               </div>
 
-              <div className="space-y-8 mb-16">
-                {advantages.map((adv: any, i: number) => (
-                  <div key={i} className="flex items-start gap-5 group">
-                    <div className="w-7 h-7 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/20 group-hover:scale-110 transition-transform">
-                       <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              {/* Benefícios destacados abaixo do nome */}
+              <div className="space-y-6 mb-12">
+                {advantages.slice(0, 6).map((adv: any, i: number) => (
+                  <div key={i} className="flex items-start gap-4 group">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                       {getAdvIcon(i)}
                     </div>
                     <div>
-                      <p className="text-[11px] font-black text-white uppercase tracking-widest leading-none mb-1.5">{adv.title}</p>
-                      <p className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter opacity-80">{adv.desc}</p>
+                      <p className="text-[11px] font-black text-white uppercase tracking-widest leading-none mb-1">{adv.title}</p>
+                      <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter opacity-70 leading-tight">{adv.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
               
-              {/* Banner de Preço Atualizado com Fundo e Tamanho Ajustado */}
               <div className="mt-auto bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950/30 p-10 rounded-[3rem] border border-emerald-500/20 relative overflow-hidden shadow-[0_20px_50px_rgba(16,185,129,0.15)] group/card ring-1 ring-white/5">
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/card:scale-110 transition-transform duration-700 pointer-events-none">
                   <Star className="w-10 h-10 text-emerald-500 fill-emerald-500" />
                 </div>
                 
-                {/* Badge de Promoção */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-500 text-slate-950 rounded-full mb-6 animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.4)]">
                   <Zap className="w-3 h-3 fill-current" />
                   <span className="text-[9px] font-black uppercase tracking-widest">PROMOÇÃO DE LANÇAMENTO</span>
