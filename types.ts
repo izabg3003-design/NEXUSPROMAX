@@ -5,6 +5,19 @@ export type Language =
 
 export type Currency = string;
 
+export interface AppBanner {
+  id: string;
+  title: string;
+  highlight: string;
+  subtitle: string;
+  cta_text: string;
+  cta_link: string;
+  image_url?: string;
+  theme_color: 'emerald' | 'purple' | 'amber' | 'rose' | 'blue';
+  is_active: boolean;
+  created_at?: string;
+}
+
 export interface Vendor {
   id: string;
   code: string;

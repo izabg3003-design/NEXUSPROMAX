@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowRight, CheckCircle2, Sparkles, ShieldCheck, Zap, Clock, Wallet, Mail, ShieldAlert, Star, TrendingUp, FileText, Quote, Globe, Info
+  ArrowRight, CheckCircle2, Sparkles, ShieldCheck, Zap, Clock, Wallet, Mail, ShieldAlert, Star, TrendingUp, FileText, Quote, Globe, Info, Megaphone, X
 } from 'lucide-react';
-import { Language } from '../types';
+import { Language, AppBanner } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface Props {
   onLogin: () => void;
@@ -18,12 +19,63 @@ interface Props {
 
 const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms, onAbout, t, lang, setLang }) => {
   const [scrolled, setScrolled] = useState(false);
+  const [activeBanners, setActiveBanners] = useState<AppBanner[]>([]);
+  const [showBannerOverlay, setShowBannerOverlay] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
+    
+    const fetchBanners = async () => {
+      try {
+        const { data, error } = await supabase.from('app_banners').select('*').eq('is_active', true).order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+          setActiveBanners(data);
+          // Mostrar o banner overlay após 1.5 segundos
+          setTimeout(() => setShowBannerOverlay(true), 1500);
+        }
+      } catch (e) {
+        console.warn("Nexus Banners: Tabela não configurada ou inacessível.");
+      }
+    };
+    fetchBanners();
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const BannerOverlay = () => {
+    if (!showBannerOverlay || activeBanners.length === 0) return null;
+    
+    const banner = activeBanners[0]; // Mostra o mais recente
+
+    return (
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 backdrop-blur-md bg-slate-950/60 animate-[fadeIn_0.3s_ease-out]">
+        <div className={`relative w-full max-w-4xl bg-slate-900 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] border border-${banner.theme_color}-500/30 animate-[modalScale_0.4s_ease-out]`}>
+          
+          {/* Botão Fechar (O único elemento de interação restante) */}
+          <button 
+            onClick={() => setShowBannerOverlay(false)}
+            className="absolute top-6 right-6 z-50 p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all border border-white/10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {banner.image_url ? (
+            <div className="relative aspect-[21/9] md:aspect-[2/1]">
+              <img src={banner.image_url} className="w-full h-full object-cover" alt={banner.title} />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+            </div>
+          ) : (
+            <div className="p-12 md:p-20 text-center flex flex-col items-center justify-center min-h-[300px]">
+              <div className={`w-24 h-24 rounded-3xl bg-${banner.theme_color}-500/10 border border-${banner.theme_color}-500/20 flex items-center justify-center`}>
+                 <Megaphone className={`w-10 h-10 text-${banner.theme_color}-400`} />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const PromoBanner = () => (
     <div className="max-w-4xl mx-auto px-6 mb-12 animate-soft">
@@ -89,6 +141,8 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
 
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 overflow-x-hidden selection:bg-emerald-500/30 font-inter">
+      <BannerOverlay />
+      
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-5%] w-[100%] h-[50%] bg-emerald-600/5 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-5%] right-[-5%] w-[100%] h-[50%] bg-purple-600/5 rounded-full blur-[120px]"></div>
@@ -109,8 +163,8 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
       </nav>
 
       <main className="relative z-10">
-        <section className="pt-40 md:pt-56 pb-12 px-6 text-center">
-          <div className="max-w-4xl mx-auto">
+        <section className="pt-40 md:pt-56 pb-6 px-6">
+           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-8">
               <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-400">{t('landing.badge')}</span>
             </div>
@@ -210,6 +264,13 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
             <p className="text-[10px] font-bold text-slate-800 uppercase tracking-[0.5em]">© 2026 {t('landing.footer.note')}</p>
           </div>
       </footer>
+
+      <style>{`
+        @keyframes modalScale {
+          from { transform: scale(0.9) translateY(20px); opacity: 0; }
+          to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };

@@ -53,6 +53,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile>(DEFAULT_USER);
   const [records, setRecords] = useState<Record<string, WorkRecord>>({});
   const [selectedVendorData, setSelectedVendorData] = useState<any>(null);
+  const [adminOverrideVendor, setAdminOverrideVendor] = useState<any>(null);
   const [authError, setAuthError] = useState<{ title: string, text: string } | null>(null);
   
   const isInitialLoad = useRef(true);
@@ -134,6 +135,7 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
     setUser(DEFAULT_USER);
     setSelectedVendorData(null);
+    setAdminOverrideVendor(null);
     setAppState('landing');
     setAuthError(null);
     notificationChecked.current = false;
@@ -241,8 +243,9 @@ const App: React.FC = () => {
               {appState === 'reports' && <ReportsPage user={user} records={records} t={t} f={formatCurrency} />}
               {appState === 'accountant' && <AccountantPage user={user} records={records} t={t} f={formatCurrency} />}
               {appState === 'settings' && <SettingsPage user={user} setUser={handleUpdateProfile} t={t} />}
-              {appState === 'admin' && <AdminPage currentUser={user} f={formatCurrency} onLogout={handleLogout} t={t} onUpdateProfile={handleUpdateProfile} />}
-              {appState === 'vendor-detail' && <VendorDetailPage vendorId={user.id!} currentUser={user} onBack={() => {}} f={formatCurrency} isVendorSelf={true} />}
+              {appState === 'admin' && <AdminPage currentUser={user} f={formatCurrency} onLogout={handleLogout} t={t} onUpdateProfile={handleUpdateProfile} onViewVendor={(id) => { setSelectedVendorData(id); setAppState('vendor-detail'); }} onViewVendorSales={(v) => { setAdminOverrideVendor(v); setAppState('vendor-sales'); }} />}
+              {appState === 'vendor-detail' && <VendorDetailPage vendorId={selectedVendorData || user.id!} currentUser={user} onBack={() => { setSelectedVendorData(null); setAppState('admin'); }} f={formatCurrency} isVendorSelf={!selectedVendorData} />}
+              {appState === 'vendor-sales' && <VendorSalesPage user={user} adminOverrideVendor={adminOverrideVendor} onBackToAdmin={() => { setAdminOverrideVendor(null); setAppState('admin'); }} />}
               {appState === 'support' && <SupportPage user={user} f={formatCurrency} t={t} />}
               {appState === 'user-support' && <UserSupportPage user={user} t={t} />}
             </div>

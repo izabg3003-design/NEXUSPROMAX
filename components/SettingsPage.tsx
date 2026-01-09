@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Camera, Save, User as UserIcon, Clock, ShieldAlert, Percent, Euro, Loader2, CheckCircle, Phone, Hash, Fingerprint, Star, ReceiptText, Info, Lock, ShieldCheck, Crown, Zap, Tag, ToggleLeft, ToggleRight, Coins } from 'lucide-react';
 import { UserProfile, Language, Currency } from '../types';
@@ -35,19 +36,7 @@ const SettingsPage: React.FC<Props> = ({ user, setUser, t }) => {
     setIsSaving(true);
     setSaveSuccess(false);
     try {
-      let finalUser = { ...formUser };
-      if (isMaster) {
-        let sub: any = {};
-        try { sub = typeof formUser.subscription === 'string' ? JSON.parse(formUser.subscription) : (formUser.subscription || {}); } catch(e) {}
-        
-        finalUser.subscription = {
-          ...sub,
-          master_global_commission: formUser.subscription?.master_global_commission ?? 1.50,
-          master_global_discount: formUser.subscription?.master_global_discount ?? 5
-        };
-      }
-
-      const success = await setUser(finalUser);
+      const success = await setUser(formUser);
       if (success) {
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
@@ -78,23 +67,6 @@ const SettingsPage: React.FC<Props> = ({ user, setUser, t }) => {
     } finally {
       setIsUpdatingPass(false);
     }
-  };
-
-  const masterSub = useMemo(() => {
-    try {
-      return typeof formUser.subscription === 'string' ? JSON.parse(formUser.subscription) : (formUser.subscription || {});
-    } catch(e) { return {}; }
-  }, [formUser.subscription]);
-
-  const updateMasterSub = (field: string, val: any) => {
-    setFormUser(prev => {
-      let sub: any = {};
-      try { sub = typeof prev.subscription === 'string' ? JSON.parse(prev.subscription) : (prev.subscription || {}); } catch(e) {}
-      return {
-        ...prev,
-        subscription: { ...sub, [field]: val }
-      };
-    });
   };
 
   return (
@@ -169,28 +141,6 @@ const SettingsPage: React.FC<Props> = ({ user, setUser, t }) => {
                 </p>
               </div>
            </div>
-
-           {isMaster && (
-             <div className="bg-amber-500/10 border border-amber-500/20 p-8 rounded-[2.5rem] space-y-6">
-                <div className="flex items-center gap-3"><Crown className="w-5 h-5 text-amber-500" /><h4 className="text-xs font-black text-white uppercase italic">GLOBAL NEXUS CONFIG</h4></div>
-                <div className="space-y-4">
-                   <div className="space-y-2">
-                      <label className="text-[9px] font-black text-amber-500/70 uppercase flex items-center gap-2"><Zap className="w-3 h-3" /> Comissão Base</label>
-                      <div className="relative">
-                        <Euro className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500" />
-                        <input type="number" step="0.01" value={masterSub.master_global_commission ?? 1.50} onChange={(e) => updateMasterSub('master_global_commission', Number(e.target.value))} className="w-full bg-slate-950 border border-amber-500/20 rounded-xl pl-12 pr-4 py-3 text-white font-black text-sm" />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <label className="text-[9px] font-black text-amber-500/70 uppercase flex items-center gap-2"><Tag className="w-3 h-3" /> Desconto Base</label>
-                      <div className="relative">
-                        <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-500" />
-                        <input type="number" step="1" value={masterSub.master_global_discount ?? 5} onChange={(e) => updateMasterSub('master_global_discount', Number(e.target.value))} className="w-full bg-slate-950 border border-amber-500/20 rounded-xl pl-12 pr-4 py-3 text-white font-black text-sm" />
-                      </div>
-                   </div>
-                </div>
-             </div>
-           )}
         </div>
 
         <div className="md:col-span-2 space-y-8">

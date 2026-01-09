@@ -45,7 +45,7 @@ const AdminGlobalAnalytics: React.FC<Props> = ({ f }) => {
       const globalDisc = (masterSub.master_global_discount ?? 5) / 100;
 
       if (pData) {
-        // AJUSTE: Apenas role === 'user' conta como venda
+        // Apenas role === 'user' conta como venda
         const allSalesProfiles = pData.filter(p => p.vendor_code && p.vendor_code.toString().trim() !== '' && p.role === 'user');
         
         const salesCount = allSalesProfiles.length;
@@ -66,7 +66,8 @@ const AdminGlobalAnalytics: React.FC<Props> = ({ f }) => {
           } catch (e) { vendorSub = {}; }
 
           const salesForThisCode = allSalesProfiles.filter(p => p.vendor_code?.toString().trim().toUpperCase() === code);
-          const vendorComm = vendorSub.custom_commission ?? knownVendor?.commission_rate ?? globalComm;
+          // PRIORIDADE: Tabela de Vendors (para sincronizar com a alteração do Admin) -> Global
+          const vendorComm = knownVendor?.commission_rate ?? globalComm;
           const vendorDisc = (vendorSub.custom_discount ?? 5) / 100;
 
           const rev = salesForThisCode.length * (14.99 * (1 - vendorDisc));
@@ -130,12 +131,29 @@ const AdminGlobalAnalytics: React.FC<Props> = ({ f }) => {
               return d.getMonth() === i && d.getFullYear() === currentYear;
             } catch (e) { return false; }
           });
+          
           const count = monthlySales.length;
           const mBruto = count * price;
-          const mDisc = mBruto * (globalDisc);
+          
+          const mComm = monthlySales.reduce((acc, sale) => {
+            const code = sale.vendor_code?.toString().trim().toUpperCase();
+            const knownVendor = vData?.find(v => v.code?.toString().trim().toUpperCase() === code);
+            const rate = knownVendor?.commission_rate ?? globalComm;
+            return acc + rate;
+          }, 0);
+
+          const mDisc = monthlySales.reduce((acc, sale) => {
+            const code = sale.vendor_code?.toString().trim().toUpperCase();
+            const knownVendor = vData?.find(v => v.code?.toString().trim().toUpperCase() === code);
+            const vendorProfile = pData?.find(p => p.id === knownVendor?.id);
+            let vSub: any = {};
+            try { vSub = typeof vendorProfile?.subscription === 'string' ? JSON.parse(vendorProfile.subscription) : (vendorProfile?.subscription || {}); } catch(e) {}
+            const discRate = (vSub.custom_discount ?? 5) / 100;
+            return acc + (price * discRate);
+          }, 0);
+
           const mIva = mBruto * ivaRate;
           const mFees = (mBruto * stripePercent) + (count * stripeFlat);
-          const mComm = count * globalComm;
 
           const mNet = mBruto - (mIva + mFees + mComm + mDisc);
           return { name: m, lucro: Number(Math.max(0, mNet).toFixed(2)) };
@@ -199,7 +217,7 @@ const AdminGlobalAnalytics: React.FC<Props> = ({ f }) => {
             { label: 'IVA (Base Bruta)', val: f(stats.totalIva), color: 'blue-400' },
             { label: 'Taxas Stripe', val: f(stats.totalStripeFees), color: 'rose-400' },
             { label: 'Comissão Venda', val: f(stats.totalComm), color: 'amber-400' },
-            { label: 'Descontos Concedidos', val: f(stats.totalDiscounts), color: 'pink-400' },
+            { label: 'Descontos Online', val: f(stats.totalDiscounts), color: 'pink-400' },
             { label: 'Líquido Nexus', val: f(stats.totalNetProfit), color: 'emerald-400', special: true },
           ].map((item, i) => (
             <div key={i} className={`bg-slate-800/20 border ${item.special ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-slate-800'} p-5 rounded-[2rem] shadow-lg print:border-black print:bg-white`}>
