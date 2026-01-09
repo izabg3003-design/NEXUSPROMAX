@@ -56,9 +56,9 @@ const App: React.FC = () => {
   const isInitialLoad = useRef(true);
   const notificationChecked = useRef(false);
 
-  // Monitoramento de Páginas para Google Analytics
+  // Monitoramento de Páginas para Google Analytics (SPA Mode)
   useEffect(() => {
-    if (typeof window.gtag === 'function') {
+    if (typeof window.gtag === 'function' && appState !== 'splash') {
       const pageTitleMap: Record<string, string> = {
         'landing': 'Página Inicial',
         'login': 'Acesso Seguro',
@@ -77,9 +77,12 @@ const App: React.FC = () => {
         'terms': 'Termos de Uso'
       };
 
-      window.gtag('config', 'G-YD6Q53C4K2', {
+      // Dispara o evento page_view explicitamente para o GA4
+      window.gtag('event', 'page_view', {
         page_title: pageTitleMap[appState] || appState,
+        page_location: window.location.href,
         page_path: `/${appState}`,
+        send_to: 'G-YD6Q53C4K2'
       });
     }
   }, [appState]);
@@ -94,11 +97,9 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [user.id, user.role, user.email]);
 
-  // Função de tradução ultra-segura para evitar "Objects are not valid as a React child"
   const t = useCallback((key: string): any => {
     try {
       const parts = key.split('.');
-      // Sempre tenta buscar no pt-PT por segurança absoluta
       let result: any = translations['pt-PT'];
       
       for (const part of parts) {
@@ -110,7 +111,6 @@ const App: React.FC = () => {
         }
       }
 
-      // Se falhar ou for um objeto (e não array), retorna a chave como string
       if (result === null || result === undefined) return key;
       if (typeof result === 'object' && !Array.isArray(result)) return key;
       
