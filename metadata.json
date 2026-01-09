@@ -1,0 +1,7 @@
+{
+  "name": "nova etapa. app testado",
+  "description": "",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
