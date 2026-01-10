@@ -61,12 +61,12 @@ const LandingPage: React.FC<Props> = ({ onLogin, onSubscribe, onPrivacy, onTerms
           </button>
 
           {banner.image_url ? (
-            <div className="relative aspect-[21/9] md:aspect-[2/1]">
+            <div className="relative aspect-[16/10] md:aspect-[16/9]">
               <img src={banner.image_url} className="w-full h-full object-cover" alt={banner.title} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
             </div>
           ) : (
-            <div className="p-12 md:p-20 text-center flex flex-col items-center justify-center min-h-[300px]">
+            <div className="p-12 md:p-20 text-center flex flex-col items-center justify-center min-h-[450px]">
               <div className={`w-24 h-24 rounded-3xl bg-${banner.theme_color}-500/10 border border-${banner.theme_color}-500/20 flex items-center justify-center`}>
                  <Megaphone className={`w-10 h-10 text-${banner.theme_color}-400`} />
               </div>

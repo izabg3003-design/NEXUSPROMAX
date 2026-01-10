@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { format, endOfMonth, eachDayOfInterval, isToday, addMonths, subMonths, isSameDay, startOfMonth, addYears, parseISO, differenceInDays } from 'date-fns';
 import { pt, enUS, es, fr, de, it, ru, uk, zhCN, ja, hi } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Save, Clock, AlertCircle, Coffee, TrendingUp, MapPin, Wallet, MessageSquare, Loader2, CheckCircle2, RefreshCw, Zap, ShieldAlert, Headphones, Activity } from 'lucide-react';
-import { UserProfile, WorkRecord } from '../types';
+import { ChevronLeft, ChevronRight, Save, Clock, AlertCircle, Coffee, TrendingUp, MapPin, Wallet, MessageSquare, Loader2, CheckCircle2, RefreshCw, Zap, ShieldAlert, Headphones, Activity, X, Megaphone } from 'lucide-react';
+import { UserProfile, WorkRecord, AppBanner } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface Props {
   user: UserProfile;
@@ -17,6 +19,10 @@ const Dashboard: React.FC<Props> = ({ user, records, onAddRecord, t }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
+  // Lógica do Banner Modelo 2 (Pós-login)
+  const [showPostLoginBanner, setShowPostLoginBanner] = useState(false);
+  const [bannerData, setBannerData] = useState<AppBanner | null>(null);
+
   const [entry, setEntry] = useState('09:00');
   const [exit, setExit] = useState('18:00');
   const [isAbsent, setIsAbsent] = useState(false);
@@ -32,6 +38,33 @@ const Dashboard: React.FC<Props> = ({ user, records, onAddRecord, t }) => {
   const lang = user.settings?.language || 'pt-PT';
   const localesMap: Record<string, any> = { 'pt-PT': pt, 'pt-BR': pt, 'en': enUS, 'es-ES': es, 'fr': fr, 'de': de, 'it': it, 'ru': ru, 'uk': uk, 'zh': zhCN, 'ja': ja, 'hi': hi };
   const currentLocale = localesMap[lang] || pt;
+
+  useEffect(() => {
+    const fetchPostLoginBanner = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_banners')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        // Modelo 2: Pega o segundo banner da lista para ser independente do primeiro (se houver mais de um)
+        // Caso só haja um, usa o mesmo, mas a lógica é independente.
+        if (!error && data && data.length > 0) {
+          const selected = data.length > 1 ? data[1] : data[0];
+          setBannerData(selected);
+          
+          // Mostrar após 800ms de entrar no dashboard
+          const timer = setTimeout(() => setShowPostLoginBanner(true), 800);
+          return () => clearTimeout(timer);
+        }
+      } catch (e) {
+        console.warn("Nexus Post-Login Banner: Erro ao carregar.");
+      }
+    };
+
+    fetchPostLoginBanner();
+  }, []);
 
   const daysRemaining = useMemo(() => {
     try {
@@ -115,8 +148,42 @@ const Dashboard: React.FC<Props> = ({ user, records, onAddRecord, t }) => {
     return 'green';
   };
 
+  const PostLoginBannerOverlay = () => {
+    if (!showPostLoginBanner || !bannerData) return null;
+
+    return (
+      <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 backdrop-blur-xl bg-slate-950/70 animate-[fadeIn_0.3s_ease-out]">
+        <div className={`relative w-full max-w-4xl bg-slate-900 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.9)] border border-${bannerData.theme_color}-500/30 animate-[modalScale_0.4s_ease-out]`}>
+          
+          <button 
+            onClick={() => setShowPostLoginBanner(false)}
+            className="absolute top-6 right-6 z-50 p-3 bg-black/40 hover:bg-black/60 text-white rounded-full backdrop-blur-md transition-all border border-white/10"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {bannerData.image_url ? (
+            <div className="relative aspect-[16/10] md:aspect-[16/9]">
+              <img src={bannerData.image_url} className="w-full h-full object-cover" alt="" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
+            </div>
+          ) : (
+            <div className="p-12 md:p-20 text-center flex flex-col items-center justify-center min-h-[500px]">
+              <div className={`w-24 h-24 rounded-3xl bg-${bannerData.theme_color}-500/10 border border-${bannerData.theme_color}-500/20 flex items-center justify-center mb-4`}>
+                 <Megaphone className={`w-10 h-10 text-${bannerData.theme_color}-400`} />
+              </div>
+              <p className="text-slate-500 font-black text-[10px] uppercase tracking-[0.3em]">Digital Nexus Intelligence</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 animate-[fadeIn_0.5s_ease-out]">
+      <PostLoginBannerOverlay />
+      
       <div className="flex items-center justify-between px-6 py-3 bg-slate-900/60 rounded-full border border-white/5 no-print">
          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
@@ -304,6 +371,13 @@ const Dashboard: React.FC<Props> = ({ user, records, onAddRecord, t }) => {
           {isSaving ? t('common.syncing') : saveSuccess ? t('settings.saved') : hasExistingRecord ? t('dashboard.update') : t('dashboard.sync')}
         </button>
       </div>
+
+      <style>{`
+        @keyframes modalScale {
+          from { transform: scale(0.9) translateY(20px); opacity: 0; }
+          to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };
